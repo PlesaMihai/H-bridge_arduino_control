@@ -1,4 +1,4 @@
-#define DEBOUNCE_TIME 100
+#define DEBOUNCE_TIME 50
 
 /* Button structure */
 typedef struct{
@@ -15,20 +15,32 @@ typedef struct{
 stButton leftButton;
 stButton rightButton;
 
-int changes = 0;
+unsigned long startTime = millis();
 
 void setup() {
+  Serial.begin(9600);
+  delay(1000);
+  Serial.println("Program started");
+  Serial.println(startTime);
   // Init the structures
   leftButton.inputPin = 2;
   leftButton.outputPin = 8;
+  leftButton.readState = HIGH;
   leftButton.prevState = HIGH;
   leftButton.lastDebounceTime = 0;
+  leftButton.pressedTime = 0;
+  leftButton.releasedTime = 0;
+  leftButton.pulseTime = 0;
 
   rightButton.inputPin = 3;
   rightButton.outputPin = 9;
+  rightButton.readState = HIGH;
   rightButton.prevState = HIGH;
   rightButton.lastDebounceTime = 0;
-  
+  rightButton.pressedTime = 0;
+  rightButton.releasedTime = 0;
+  rightButton.pulseTime = 0;
+
   // Configure input and outputs
   pinMode(leftButton.inputPin, INPUT_PULLUP);
   pinMode(leftButton.outputPin, OUTPUT);
@@ -37,23 +49,12 @@ void setup() {
   pinMode(rightButton.inputPin, INPUT_PULLUP);
   pinMode(rightButton.outputPin, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(rightButton.inputPin), rightIsr, CHANGE);
-  Serial.begin(9600);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   pollChanges(&leftButton);
   pollChanges(&rightButton);
-  if(changes != 0)
-  {
-    changes = 0;
-    Serial.println("presTime");
-    Serial.println(leftButton.pressedTime);
-    Serial.println("releasedTime");
-    Serial.println(leftButton.releasedTime);
-    Serial.println("pulseTime");
-    Serial.println(leftButton.pulseTime);
-  }
 }
 
 void pollChanges(stButton* pButton)
@@ -75,7 +76,6 @@ void pollChanges(stButton* pButton)
         // else the btn was released
         pButton->releasedTime = millis();
         pButton->pulseTime = pButton->releasedTime - pButton->pressedTime;
-        changes = 1;
       }
     }
   }
