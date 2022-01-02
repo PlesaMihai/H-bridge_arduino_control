@@ -8,7 +8,9 @@
 #define RUN_STOP_AUTO 3
 
 #define RUN_TIME      1000    // timp rulare in ciclu
-#define PAUSE_TIME    3000    // timp pauza in ciclu
+
+#define READ_POT_DELAY  500   // read pot only once at 0.5s to free cpu
+
 
 /* CONTROL PUNTE H */
 /* OUTPUT urile pentru control de punte H */
@@ -17,6 +19,7 @@ const int out2 = 9;
 const int pwmo = 10;
 const int stby = 11;
 
+const int potPin = 1;
 
 enum eHBridgeCMD
 {
@@ -52,6 +55,7 @@ typedef struct{
   int runType;
   unsigned long timeStarted;
   unsigned long timePaused;
+  unsigned long timeToPause;
 }stMotor;
 
 /* Button structure */
@@ -72,13 +76,13 @@ stButton leftButton;
 stButton rightButton;
 stMotor motor;
 
-unsigned long startTime = millis();
+unsigned long potDelay = millis();
+int firstRun = 0;
 
 void setup() {
   Serial.begin(9600);
   delay(1000);
   Serial.println("Program started");
-  Serial.println(startTime);
 
   // Init the structures
   leftButton.inputPin = 2;          // input buton 1
@@ -105,6 +109,7 @@ void setup() {
   motor.timePaused = 0;
   motor.eState = IDL;
   motor.ePrevState = IDL;
+  motor.timeToPause = 1000;
 
   // Configure input and outputs
   pinMode(leftButton.inputPin, INPUT_PULLUP);
@@ -124,6 +129,11 @@ void loop() {
   pollChanges(&leftButton);
   pollChanges(&rightButton);
   cycleMotor();
+  if(millis() - potDelay >= READ_POT_DELAY)
+  {
+    readPot();
+    potDelay = millis();
+  }
   if(motor.eState != motor.ePrevState)
   {
     controlHBridge(motor.eCMD);
@@ -159,9 +169,10 @@ void cycleMotor()
       Serial.println("<----CYCLE--STOP-->");
       Serial.println(motor.eState);
     }
-    if(millis() - motor.timePaused >= PAUSE_TIME && motor.eState != RUN)
+    if(firstRun == 0 || (millis() - motor.timePaused >= motor.timeToPause && motor.eState != RUN))
     {
       //start
+      firstRun = 1;
       motor.timeStarted = millis();
       motor.ePrevState = motor.eState;
       motor.eState = RUN;
@@ -234,7 +245,6 @@ void changeMotorPos(stButton* pButton)
     if(motor.eState == IDL || motor.eState == STOP)
     {
       motor.eDir = CCW;
-      //motor.eState = RUN;
     }else{
       motor.eState = STOP;
     }
@@ -243,7 +253,6 @@ void changeMotorPos(stButton* pButton)
     if(motor.eState == IDL || motor.eState == STOP)
     {
       motor.eDir = CW;
-      //motor.eState = RUN;
     }else{
       motor.eState = STOP;
     }
@@ -341,4 +350,11 @@ void leftIsr()
 void rightIsr()
 {
   debounceInput(&rightButton);
+}
+
+void readPot()
+{
+  unsigned long value = analogRead(potPin);
+  value = map(value, 0, 1023, 1000, 10000);
+  motor.timeToPause = value;
 }
