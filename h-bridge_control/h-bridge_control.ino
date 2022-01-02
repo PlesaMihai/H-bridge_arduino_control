@@ -104,6 +104,7 @@ void setup() {
   motor.timeStarted = 0;
   motor.timePaused = 0;
   motor.eState = IDL;
+  motor.ePrevState = IDL;
 
   // Configure input and outputs
   pinMode(leftButton.inputPin, INPUT_PULLUP);
@@ -149,22 +150,22 @@ void cycleMotor()
 {
   if(motor.runType == RUN_AUTO)
   {
-    if(millis() - motor.timeStarted >= RUN_TIME && motor.eState != STOP)
+    if(millis() - motor.timeStarted >= RUN_TIME && motor.eState == RUN)
     {
       //pause
       motor.timePaused = millis();
       motor.ePrevState = motor.eState;
       motor.eState = STOP;
-      Serial.println("<---------CYCLE-------->");
+      Serial.println("<----CYCLE--STOP-->");
       Serial.println(motor.eState);
     }
-    if(millis() - motor.timePaused >= PAUSE_TIME && motor.eState == STOP)
+    if(millis() - motor.timePaused >= PAUSE_TIME && motor.eState != RUN)
     {
       //start
       motor.timeStarted = millis();
       motor.ePrevState = motor.eState;
       motor.eState = RUN;
-      Serial.println("<---------CYCLE-------->");
+      Serial.println("<-----CYCLE--RUN-->");
       Serial.println(motor.eState);
     }
   }else if(motor.runType == RUN_STOP_AUTO)
@@ -233,7 +234,7 @@ void changeMotorPos(stButton* pButton)
     if(motor.eState == IDL || motor.eState == STOP)
     {
       motor.eDir = CCW;
-      motor.eState = RUN;
+      //motor.eState = RUN;
     }else{
       motor.eState = STOP;
     }
@@ -242,7 +243,7 @@ void changeMotorPos(stButton* pButton)
     if(motor.eState == IDL || motor.eState == STOP)
     {
       motor.eDir = CW;
-      motor.eState = RUN;
+      //motor.eState = RUN;
     }else{
       motor.eState = STOP;
     }
@@ -289,6 +290,7 @@ void pollChanges(stButton* pButton)
         motor.runType = RUN_STOP_AUTO;
       }else{
         changeMotorPos(pButton);
+        motor.eState = RUN;
       } 
     }
   }
@@ -313,8 +315,8 @@ void pollChanges(stButton* pButton)
         Serial.println("RELEASE");
         pButton->releasedTime = millis();
         pButton->pulseTime = pButton->releasedTime - pButton->pressedTime;
-        pButton->btnState = BTN_RELEASE;
         interpretPulse(pButton); 
+        pButton->btnState = BTN_RELEASE;
       }
     }
   }
