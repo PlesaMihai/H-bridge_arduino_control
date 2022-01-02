@@ -1,15 +1,16 @@
 #define BTN_DEBOUNCE_TIME 70    // timp de debounce
-#define PULSE_WIDTH   300       // cat sa tii butonul apasat sa intre in auto
+#define PULSE_WIDTH       300       // cat sa tii butonul apasat sa intre in auto
 
-#define BTN_LEFT      1
-#define BTN_RIGHT     2
-#define RUN_MANUAL    1
-#define RUN_AUTO      2
-#define RUN_STOP_AUTO 3
+#define BTN_LEFT          1
+#define BTN_RIGHT         2
+#define RUN_MANUAL        1
+#define RUN_AUTO          2
+#define RUN_STOP_AUTO     3
 
-#define RUN_TIME      1000    // timp rulare in ciclu
+#define RUN_TIME          1000    // timp rulare in ciclu
 
-#define READ_POT_DELAY  500   // read pot only once at 0.5s to free cpu time
+#define READ_POT_DELAY    500   // read pot only once at 0.5s to free cpu time
+#define TIME_TO_STBY      5000
 
 
 /* CONTROL PUNTE H */
@@ -77,6 +78,7 @@ stButton rightButton;
 stMotor motor;
 
 unsigned long potDelay = millis();
+unsigned long stbyTime = millis();
 int firstRun = 0;
 
 void setup() {
@@ -134,6 +136,13 @@ void loop() {
     readPot();
     potDelay = millis();
   }
+  if(millis() - stbyTime >= TIME_TO_STBY && motor.eState == STOP)
+  {
+    stbyTime = millis();
+    motor.ePrevState = STOP;
+    motor.eState = IDL;
+    motor.eCMD = STBY;
+  }
   if(motor.eState != motor.ePrevState)
   {
     controlHBridge(motor.eCMD);
@@ -166,6 +175,7 @@ void cycleMotor()
       motor.timePaused = millis();
       motor.ePrevState = motor.eState;
       motor.eState = STOP;
+      stbyTime = millis();
       Serial.println("<----CYCLE--STOP-->");
       Serial.println(motor.eState);
     }
@@ -183,6 +193,7 @@ void cycleMotor()
   {
     motor.ePrevState = motor.eState;
     motor.eState = STOP;
+    stbyTime = millis();
     motor.runType = RUN_MANUAL;
     Serial.println("<---------CYCLE-------->");
     Serial.println(motor.eState);
@@ -247,6 +258,7 @@ void changeMotorPos(stButton* pButton)
       motor.eDir = CCW;
     }else{
       motor.eState = STOP;
+      stbyTime = millis();
     }
   }else if(pButton->btnPos == BTN_RIGHT)
   {
@@ -255,6 +267,7 @@ void changeMotorPos(stButton* pButton)
       motor.eDir = CW;
     }else{
       motor.eState = STOP;
+      stbyTime = millis();
     }
   }
   updateCommand();
@@ -266,6 +279,7 @@ void interpretPulse(stButton* pButton)
   if(pButton->btnState == BTN_HOLD)
   {
     motor.eState = STOP;
+    stbyTime = millis();
     pButton->btnState = BTN_RELEASE;
     motor.eCMD = BRAKE;
   }else{
