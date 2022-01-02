@@ -10,7 +10,7 @@
 #define RUN_TIME          1000    // timp rulare in ciclu
 
 #define READ_POT_DELAY    500   // read pot only once at 0.5s to free cpu time
-#define TIME_TO_STBY      5000
+#define TIME_TO_STBY      5000  // time to cut power to the motor after it is stopped
 
 
 /* CONTROL PUNTE H */
@@ -20,7 +20,7 @@ const int out2 = 9;
 const int pwmo = 10;
 const int stby = 11;
 
-const int potPin = 1;
+const int potPin = 1; //  Analog pin for the potentiometer
 
 enum eHBridgeCMD
 {
