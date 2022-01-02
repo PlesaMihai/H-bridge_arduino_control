@@ -9,7 +9,7 @@
 
 #define RUN_TIME      1000    // timp rulare in ciclu
 
-#define READ_POT_DELAY  500   // read pot only once at 0.5s to free cpu
+#define READ_POT_DELAY  500   // read pot only once at 0.5s to free cpu time
 
 
 /* CONTROL PUNTE H */
@@ -355,6 +355,6 @@ void rightIsr()
 void readPot()
 {
   unsigned long value = analogRead(potPin);
-  value = map(value, 0, 1023, 1000, 10000);
+  value = map(value, 0, 1023, 0, 10000);
   motor.timeToPause = value;
 }
