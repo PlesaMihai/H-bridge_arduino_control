@@ -21,6 +21,7 @@ const int pwmo = 10;
 const int stby = 11;
 
 const int potPin = 1; //  Analog pin for the potentiometer
+const int potPin2 = 2; // Analog pin for the potentiometer2
 
 enum eHBridgeCMD
 {
@@ -54,6 +55,7 @@ typedef struct{
   enum eMotorDir eDir;
   enum eHBridgeCMD eCMD;
   int runType;
+  int pwmDuty;
   unsigned long timeStarted;
   unsigned long timePaused;
   unsigned long timeToPause;
@@ -112,6 +114,7 @@ void setup() {
   motor.eState = IDL;
   motor.ePrevState = IDL;
   motor.timeToPause = 1000;
+  motor.pwmDuty = 50;
 
   // Configure input and outputs
   pinMode(leftButton.inputPin, INPUT_PULLUP);
@@ -134,6 +137,7 @@ void loop() {
   if(millis() - potDelay >= READ_POT_DELAY)
   {
     readPot();
+    readPot2();
     potDelay = millis();
   }
   if(millis() - stbyTime >= TIME_TO_STBY && motor.eState == STOP)
@@ -210,7 +214,7 @@ void controlHBridge(eHBridgeCMD motorState)
       Serial.println("LEFT");
       digitalWrite(out1, LOW);
       digitalWrite(out2, HIGH);
-      digitalWrite(pwmo, HIGH);
+      analogWrite(pwmo, motor.pwmDuty);
       digitalWrite(stby, HIGH);
     break;
     case RIGHT:
@@ -218,7 +222,7 @@ void controlHBridge(eHBridgeCMD motorState)
       Serial.println("RIGHT");
       digitalWrite(out1, HIGH);
       digitalWrite(out2, LOW);
-      digitalWrite(pwmo, HIGH);
+      analogWrite(pwmo, motor.pwmDuty);
       digitalWrite(stby, HIGH);
     break;
     case BRAKE:
@@ -371,4 +375,12 @@ void readPot()
   unsigned long value = analogRead(potPin);
   value = map(value, 0, 1023, 0, 10000);
   motor.timeToPause = value;
+}
+
+void readPot2()
+{
+  unsigned long value = analogRead(potPin2);
+  value = map(value, 0, 1023, 50, 100);
+  motor.pwmDuty = value * 255 / 100;
+  Serial.println(motor.pwmDuty);
 }
