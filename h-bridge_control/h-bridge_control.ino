@@ -136,7 +136,6 @@ void loop() {
   if(millis() - potDelay >= READ_POT_DELAY)
   {
     readPot();
-    readPot2();
     potDelay = millis();
   }
   if(millis() - stbyTime >= TIME_TO_STBY && motor.eState == STOP)
@@ -172,9 +171,10 @@ void cycleMotor()
 {
   if(motor.runType == RUN_AUTO)
   {
-    if(millis() - motor.timeStarted >= RUN_TIME && motor.eState == RUN)
+    if(millis() - motor.timeStarted >= motor.timeToPause && motor.eState == RUN)
     {
-      //pause
+      //stop
+      motor.runType = STOP;
       motor.timePaused = millis();
       motor.ePrevState = motor.eState;
       motor.eState = STOP;
