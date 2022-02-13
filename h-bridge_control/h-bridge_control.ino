@@ -64,7 +64,6 @@ typedef struct{
 /* Button structure */
 typedef struct{
   int inputPin;
-  int outputPin;
   int readState;
   int prevState;
   int btnPos;
@@ -259,7 +258,8 @@ void changeMotorPos(stButton* pButton)
   {
     if(motor.eState == IDL || motor.eState == STOP)
     {
-      motor.eDir = CCW;
+      motor.eDir = CW;
+      motor.pwmDuty = 100;
     }else{
       motor.eState = STOP;
       stbyTime = millis();
@@ -269,6 +269,7 @@ void changeMotorPos(stButton* pButton)
     if(motor.eState == IDL || motor.eState == STOP)
     {
       motor.eDir = CW;
+      motor.pwmDuty = readPot2();
     }else{
       motor.eState = STOP;
       stbyTime = millis();
@@ -377,9 +378,10 @@ void readPot()
   motor.timeToPause = value;
 }
 
-void readPot2()
+int readPot2()
 {
   unsigned long value = analogRead(potPin2);
   value = map(value, 0, 1023, 50, 100);
-  motor.pwmDuty = value * 255 / 100;
+  int pwmDuty = value * 255 / 100;
+  return pwmDuty;
 }
