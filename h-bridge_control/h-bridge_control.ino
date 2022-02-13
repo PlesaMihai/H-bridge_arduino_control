@@ -382,5 +382,4 @@ void readPot2()
   unsigned long value = analogRead(potPin2);
   value = map(value, 0, 1023, 50, 100);
   motor.pwmDuty = value * 255 / 100;
-  Serial.println(motor.pwmDuty);
 }
